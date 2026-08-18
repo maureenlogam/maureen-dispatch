@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dispatch — Ops Board</title>
+</head>
+<body style="margin:0;">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+.db-root {
+  --ink: #121820;
+  --panel: #1A222C;
+  --panel-raised: #202A36;
+  --hairline: #2C3742;
+  --text: #ECEFF2;
+  --text-muted: #8C99A6;
+  --sopan: #43A855;
+  --sopan-dim: #2C6B39;
+  --servewell: #4FA3D1;
+  --servewell-dim: #336E8F;
+  --ebg: #E4A13B;
+  --ebg-dim: #A5762A;
+  --personal: #E0705F;
+  --personal-dim: #A44E42;
+  --today: #F2C744;
+  --radius: 3px;
+
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  padding: 28px 20px 60px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.db-root * { box-sizing: border-box; }
+
+.db-wrap { max-width: 1180px; margin: 0 auto; }
+
+/* ---------- HEADER ---------- */
+.db-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+  border-bottom: 2px solid var(--hairline);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+.db-title-block { display: flex; flex-direction: column; gap: 6px; }
+.db-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--today);
+  text-transform: uppercase;
+}
+.db-title {
+  font-family: 'Archivo Expanded', sans-serif;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.db-sub { color: var(--text-muted); font-size: 13px; }
+.db-clock {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+.db-date { font-size: 15px; font-weight: 700; }
+.db-status {
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--sopan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.db-status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--sopan);
+  box-shadow: 0 0 6px var(--sopan);
+}
+
+/* ---------- TODAY STRIP ---------- */
+.db-today {
+  background: linear-gradient(180deg, #26210F, var(--panel));
+  border: 1px solid #4A3F1C;
+  border-left: 4px solid var(--today);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 26px;
+}
+.db-today-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--today);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.db-today-list { display: flex; flex-direction: column; gap: 2px; }
+
+/* ---------- GRID OF LINES ---------- */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .db-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .db-grid { grid-template-columns: 1fr; }
+  .db-title { font-size: 24px; }
+  .db-header { flex-direction: column; align-items: flex-start; }
+  .db-clock { text-align: left; }
+  .db-status { justify-content: flex-start; }
+}
+
+.db-line {
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.db-line-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.db-line-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  opacity: 0.85;
+}
+.db-line-name {
+  font-family: 'Archivo Expanded', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+}
+.db-line-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.db-line-headrow { display: flex; align-items: baseline; gap: 8px; }
+
+.db-line-body { padding: 6px 8px 10px; display: flex; flex-direction: column; }
+
+/* per-line accent colors via data attribute */
+.db-line[data-line="sopan"]     { border-top: 3px solid var(--sopan); }
+.db-line[data-line="servewell"] { border-top: 3px solid var(--servewell); }
+.db-line[data-line="ebg"]       { border-top: 3px solid var(--ebg); }
+.db-line[data-line="personal"]  { border-top: 3px solid var(--personal); }
+.db-line[data-line="sopan"]     .db-line-code { color: var(--sopan); }
+.db-line[data-line="servewell"] .db-line-code { color: var(--servewell); }
+.db-line[data-line="ebg"]       .db-line-code { color: var(--ebg); }
+.db-line[data-line="personal"]  .db-line-code { color: var(--personal); }
+
+/* ---------- TASK ROW ---------- */
+.db-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.db-task:hover { background: var(--panel-raised); }
+
+.db-seal {
+  flex: none;
+  width: 18px; height: 18px;
+  margin-top: 1px;
+  border-radius: 3px;
+  border: 1.5px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.db-task[data-done="true"] .db-seal {
+  transform: rotate(-6deg) scale(1.05);
+}
+.db-seal svg { width: 12px; height: 12px; opacity: 0; transition: opacity 0.15s ease; }
+.db-task[data-done="true"] .db-seal svg { opacity: 1; }
+
+.db-line[data-line="sopan"]     .db-task[data-done="true"] .db-seal { background: var(--sopan-dim); border-color: var(--sopan); }
+.db-line[data-line="servewell"] .db-task[data-done="true"] .db-seal { background: var(--servewell-dim); border-color: var(--servewell); }
+.db-line[data-line="ebg"]       .db-task[data-done="true"] .db-seal { background: var(--ebg-dim); border-color: var(--ebg); }
+.db-line[data-line="personal"]  .db-task[data-done="true"] .db-seal { background: var(--personal-dim); border-color: var(--personal); }
+.db-today-list .db-task[data-done="true"] .db-seal { background: #4A3F1C; border-color: var(--today); }
+
+.db-task-text { flex: 1; }
+.db-task-label {
+  font-size: 13.5px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.db-task[data-done="true"] .db-task-label {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.db-task-note {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+.db-today-list .db-task-label { font-size: 14px; }
+.db-today-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  padding: 1px 6px;
+  border-radius: 20px;
+  flex: none;
+  margin-top: 1px;
+  border: 1px solid currentColor;
+}
+.db-today-tag.sopan { color: var(--sopan); }
+.db-today-tag.personal { color: var(--personal); }
+
+.db-footer {
+  margin-top: 26px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+</style>
+
+<div class="db-root">
+  <div class="db-wrap">
+
+    <div class="db-header">
+      <div class="db-title-block">
+        <div class="db-eyebrow">Ops Board — All Lines</div>
+        <div class="db-title">DISPATCH</div>
+        <div class="db-sub">SOPAN · Servewell · EyeBrainGym · Personal</div>
+      </div>
+      <div class="db-clock">
+        <div class="db-date" id="db-date">—</div>
+        <div class="db-status"><span class="db-status-dot"></span><span id="db-open-count">loading…</span></div>
+      </div>
+    </div>
+
+    <div class="db-today">
+      <div class="db-today-head">▌ Today — departs now</div>
+      <div class="db-today-list" id="today-list"></div>
+    </div>
+
+    <div class="db-grid" id="lines"></div>
+
+    <div class="db-footer">Tap a line to check it off · saved on this device</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const data = {
+    today: [
+      { id: "today-1", tag: "sopan", label: "Update Excel — Farello / Wooblazz", note: "" },
+      { id: "today-2", tag: "personal", label: "Lenses — Blue Elephant glasses", note: "" }
+    ],
+    lines: [
+      {
+        key: "sopan", code: "SPN — SOPAN", name: "SOPAN",
+        tasks: [
+          { id: "spn-1", label: "Decide on Marketing Executive for SOPAN", note: "Candidate decision still open" },
+          { id: "spn-2", label: "IRSE 2026 booth — Aug 26–27, Swissôtel PIK", note: "Confirm 16A/20A power with organizer, lock your badge title, finalize layout" },
+          { id: "spn-3", label: "Marketz — request lead-count KPI in writing", note: "Pasal 6 ayat 3–4, to Ricky & Venny" },
+          { id: "spn-4", label: "Cozylila pitch deck — send / follow up", note: "Deck is built, checkout-fix angle leads" },
+          { id: "spn-5", label: "Meta Ads reports — next cycle", note: "Biweekly/monthly across the client roster" }
+        ]
+      },
+      {
+        key: "servewell", code: "SVW — Servewell", name: "Servewell",
+        tasks: [
+          { id: "svw-1", label: "File overdue LKPM Q1 & Q2 2026 via OSS", note: "Second warning issued — risk of NIB suspension" },
+          { id: "svw-2", label: "Resolve KBLI 50133 vessel classification", note: "Vigor (496 GT) doesn't meet barge requirement" },
+          { id: "svw-3", label: "Confirm vessel ownership documentation", note: "PT PANN lease question for Persyaratan No. 7 & 11" }
+        ]
+      },
+      {
+        key: "ebg", code: "EBG — EyeBrainGym", name: "EyeBrainGym",
+        tasks: [
+          { id: "ebg-1", label: "Finalize & circulate teacher PKS", note: "Partnership agreement ready for sign-off" },
+          { id: "ebg-2", label: "Roll out Teacher Quick Reference + worksheet", note: "To the current teacher cohort" },
+          { id: "ebg-3", label: "Follow up EKRAF joint-event pivot", note: "UMKM collaboration angle raised by contact" }
+        ]
+      },
+      {
+        key: "personal", code: "PER — Personal", name: "Personal",
+        tasks: [
+          { id: "per-1", label: "Cut nails", note: "" },
+          { id: "per-2", label: "Read Bible", note: "" },
+          { id: "per-3", label: "Book Australian Open tickets", note: "" },
+          { id: "per-4", label: "Mel's wedding tickets", note: "" }
+        ]
+      }
+    ]
+  };
+
+  const STORAGE_KEY = "dispatch-board-state";
+  let state = {};
+
+  function checkSvg() {
+    return '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function allTaskIds() {
+    const ids = data.today.map(t => t.id);
+    data.lines.forEach(l => l.tasks.forEach(t => ids.push(t.id)));
+    return ids;
+  }
+
+  function renderToday() {
+    const el = document.getElementById("today-list");
+    el.innerHTML = "";
+    data.today.forEach(t => {
+      const row = document.createElement("div");
+      row.className = "db-task";
+      row.dataset.id = t.id;
+      row.dataset.done = !!state[t.id];
+      row.innerHTML = `
+        <div class="db-seal">${checkSvg()}</div>
+        <div class="db-task-text">
+          <div class="db-task-label">${t.label}</div>
+        </div>
+        <div class="db-today-tag ${t.tag}">${t.tag}</div>
+      `;
+      row.addEventListener("click", () => toggle(t.id, row));
+      el.appendChild(row);
+    });
+  }
+
+  function renderLines() {
+    const wrap = document.getElementById("lines");
+    wrap.innerHTML = "";
+    data.lines.forEach(line => {
+      const openCount = line.tasks.filter(t => !state[t.id]).length;
+      const card = document.createElement("div");
+      card.className = "db-line";
+      card.dataset.line = line.key;
+      card.innerHTML = `
+        <div class="db-line-head">
+          <div class="db-line-code">${line.code}</div>
+          <div class="db-line-headrow">
+            <div class="db-line-name">${line.name}</div>
+            <div class="db-line-count">${openCount} open</div>
+          </div>
+        </div>
+        <div class="db-line-body"></div>
+      `;
+      const body = card.querySelector(".db-line-body");
+      line.tasks.forEach(t => {
+        const row = document.createElement("div");
+        row.className = "db-task";
+        row.dataset.id = t.id;
+        row.dataset.done = !!state[t.id];
+        row.innerHTML = `
+          <div class="db-seal">${checkSvg()}</div>
+          <div class="db-task-text">
+            <div class="db-task-label">${t.label}</div>
+            ${t.note ? `<div class="db-task-note">${t.note}</div>` : ""}
+          </div>
+        `;
+        row.addEventListener("click", () => toggle(t.id, row));
+        body.appendChild(row);
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  function updateOpenCounter() {
+    const ids = allTaskIds();
+    const open = ids.filter(id => !state[id]).length;
+    document.getElementById("db-open-count").textContent = `${open} OF ${ids.length} OPEN`;
+  }
+
+  function toggle(id, row) {
+    state[id] = !state[id];
+    row.dataset.done = state[id];
+    updateOpenCounter();
+    renderLines(); // refresh per-line open counts
+    save();
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Save failed:", e);
+    }
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) state = JSON.parse(raw);
+    } catch (e) {
+      state = {};
+    }
+    renderToday();
+    renderLines();
+    updateOpenCounter();
+  }
+
+  function renderDate() {
+    const d = new Date();
+    const opts = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+    document.getElementById("db-date").textContent = d.toLocaleDateString("en-US", opts);
+  }
+
+  renderDate();
+  load();
+})();
+</script>
+
+</body>
+</html>
